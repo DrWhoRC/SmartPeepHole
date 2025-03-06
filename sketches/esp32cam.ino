@@ -35,7 +35,7 @@ PubSubClient client(espClient);
 
 // 连接 Wi-Fi
 void setup_wifi() {
-  Serial.print("📶 连接 Wi-Fi 中...");
+  Serial.print("connecting Wi-Fi ...");
   WiFi.begin(ssid, password);
   int retries = 0;
   while (WiFi.status() != WL_CONNECTED) {
@@ -43,28 +43,28 @@ void setup_wifi() {
     Serial.print(".");
     retries++;
     if (retries > 30) { // 15秒超时
-      Serial.println("\n❌ Wi-Fi 连接失败，重启...");
+      Serial.println("\nWi-Fi connection failed，reboot...");
       ESP.restart();
     }
   }
-  Serial.println("\n✅ Wi-Fi 连接成功！");
+  Serial.println("\nWi-Fi connected！");
 }
 
 // 连接 MQTT 服务器
 void reconnect_mqtt() {
   int retries = 0;
   while (!client.connected()) {
-    Serial.print("🔗 连接 MQTT...");
+    Serial.print("connecting MQTT...");
     if (client.connect("ESP32-CAM")) {
-      Serial.println("✅ MQTT 连接成功！");
+      Serial.println("MQTT connected！");
       client.subscribe(topic_capture);
       return;
     } else {
-      Serial.print("❌ 失败，状态码: ");
+      Serial.print("failed，status code: ");
       Serial.println(client.state());
       retries++;
       if (retries > 5) {
-        Serial.println("🔄 MQTT 连接失败，重启 ESP32...");
+        Serial.println("MQTT connection failed，reboot ESP32...");
         ESP.restart();
       }
       delay(2000);
@@ -102,7 +102,7 @@ void setup_camera() {
   config.frame_size = FRAMESIZE_UXGA; // 1280x1024 (更清晰)
 
   if (esp_camera_init(&config) != ESP_OK) {
-    Serial.println("📷 摄像头初始化失败！");
+    Serial.println("camera initialization failed！");
     return;
   }
 }
@@ -113,7 +113,7 @@ void sendImageToMQTT(camera_fb_t *fb) {
         reconnect_mqtt();
     }
 
-    Serial.println("📡 发送图片起始标志...");
+    Serial.println("sending starting mark of the pic...");
     client.publish(topic_image, "START", false);
 
     const size_t CHUNK_SIZE = 1000;  // 每次最多发送 1000 字节
@@ -126,7 +126,7 @@ void sendImageToMQTT(camera_fb_t *fb) {
         delay(10);  // 确保 MQTT 服务器有时间处理
     }
 
-    Serial.println("📡 发送图片结束标志...");
+    Serial.println("sending ending mark of  the pic ...");
     client.publish(topic_image, "END", false);
 }
 
@@ -134,16 +134,16 @@ void sendImageToMQTT(camera_fb_t *fb) {
 void callback(char* topic, byte* payload, unsigned int length) {
   String message = String((char*)payload).substring(0, length);
   if (message == "capture") {
-    Serial.println("📸 收到拍照指令，开始拍照...");
+    Serial.println("received capture command，starting shooting...");
 
     camera_fb_t* fb = esp_camera_fb_get();
     if (!fb) {
-      Serial.println("❌ 拍照失败！");
+      Serial.println("shooting failed！");
       client.publish(topic_image, "failed");
       return;
     }
 
-    Serial.println("📷 拍照成功，开始分块发送...");
+    Serial.println("shooting succeed，starting sending...");
     sendImageToMQTT(fb);
     esp_camera_fb_return(fb);
   }

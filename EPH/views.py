@@ -18,13 +18,13 @@ class RegisterView(APIView):
         password = request.data.get('password')
 
         if UserBasicModel.objects.filter(name=name).exists():
-            return Response({"error": "用户名已存在"}, status=400)
+            return Response({"error": "user name already exists"}, status=400)
 
         user = UserBasicModel(name=name)
         user.set_password(password)  # 加密密码
         user.save()
 
-        return Response({"message": "✅ 用户注册成功"})
+        return Response({"message": "register successfully"})
 
 class LoginView(APIView):
     def post(self, request):
@@ -33,7 +33,7 @@ class LoginView(APIView):
 
         user = UserBasicModel.objects.filter(name=name).first()
         if not user or not user.check_password(password):  # 使用 Django 的 check_password()
-            return Response({"error": "用户名或密码错误"}, status=400)
+            return Response({"error": "name or pwd wrong"}, status=400)
 
         # 生成 JWT Token
         refresh = RefreshToken.for_user(user)
@@ -49,7 +49,7 @@ class ProtectedView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response({"message": f"欢迎，{request.user.username}，您已通过认证！"})
+        return Response({"message": f"welcome，{request.user.username}，authorization succeed！"})
 
 class ObjectDetectView(APIView):
     # permission_classes = [IsAuthenticated]
@@ -65,7 +65,7 @@ class CapturePhotoView(APIView):
     def post(self, request):
         """ 发送 MQTT 消息触发 ESP32-CAM 拍照 """
         publish.single("mqtt/control/capture", "capture", hostname=MQTT_BROKER)
-        return Response({"status": "📸 拍照指令已发送"})
+        return Response({"status": "capture command sent"})
 
 PHOTO_DIR = os.path.join(settings.BASE_DIR, "photos")
 
