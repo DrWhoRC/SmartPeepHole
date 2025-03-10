@@ -1,3 +1,7 @@
+import os
+# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'E_PeepHole.settings')
+# import django
+# django.setup()
 import paho.mqtt.client as mqtt
 from django.core.files.base import ContentFile
 from django.utils.timezone import now
@@ -8,6 +12,11 @@ MQTT_PORT = 1883
 TOPIC_OBJECT_DETECT = "object/detect"
 TOPIC_IMAGE = "camera/image"
 
+# 照片存储目录（项目根目录下的 "photos" 文件夹）
+PHOTO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "photos")
+
+# 确保目录存在
+os.makedirs(PHOTO_DIR, exist_ok=True)
 buffer = bytearray()
 receiving = False
 
@@ -31,8 +40,12 @@ def on_message(client, userdata, msg):
             return
         elif payload == "END":
             filename = f"received_{now().strftime('%Y%m%d%H%M%S')}.jpeg"
-            photo = PhotoModel.objects.create()
-            photo.image.save(filename, ContentFile(buffer))  # 存入数据库
+            filepath = os.path.join(PHOTO_DIR, filename)
+
+            with open(filepath, "wb") as f:
+                f.write(buffer)
+            PhotoModel.objects.create()
+            print(f"📸 照片保存至: {filepath}")
             buffer = bytearray()
             receiving = False
             return

@@ -12,9 +12,16 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+from django.conf import settings
+from django.conf.urls.static import static
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+MEDIA_URL = "/photos/"
+MEDIA_ROOT = os.path.join(settings.BASE_DIR, "photos")
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [os.path.join(settings.BASE_DIR, "static")]
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -38,7 +45,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'EPH.apps.EphConfig',
-
+    'rest_framework',
+    # 'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -90,6 +98,15 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#     ),
+#     'DEFAULT_PERMISSION_CLASSES': (
+#         'rest_framework.permissions.IsAuthenticated',
+#     ),
+# }
+REST_FRAMEWORK = {}
 
 
 # Password validation
@@ -112,13 +129,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # access 令牌 30 分钟后过期
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # refresh 令牌 7 天后过期
-    'ROTATE_REFRESH_TOKENS': True,  # 每次使用 refresh 令牌时，生成新的 refresh
-    'BLACKLIST_AFTER_ROTATION': True,  # 旧的 refresh 令牌失效
-    'AUTH_HEADER_TYPES': ('Bearer',),
-}
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # access 令牌 30 分钟后过期
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # refresh 令牌 7 天后过期
+#     'ROTATE_REFRESH_TOKENS': True,  # 每次使用 refresh 令牌时，生成新的 refresh
+#     'BLACKLIST_AFTER_ROTATION': True,  # 旧的 refresh 令牌失效
+#     'AUTH_HEADER_TYPES': ('Bearer',),
+# }
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 

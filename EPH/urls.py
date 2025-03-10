@@ -1,4 +1,6 @@
+from django.conf.urls.static import static
 from django.urls import path
+from django.views.generic import TemplateView
 
 from EPH.views import *
 
@@ -15,3 +17,7 @@ urlpatterns = [
 
     path('objectdetect/', ObjectDetectView.as_view(), name='objectdetect'),
 ]
+urlpatterns += [
+    path('', TemplateView.as_view(template_name="index.html"), name="home"),
+]
+urlpatterns += static("/photos/", document_root=os.path.join(settings.BASE_DIR, "photos"))

@@ -14,11 +14,21 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import os
+
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import TemplateView
+
+from E_PeepHole import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('user/', include(('EPH.urls', 'EPH'), namespace='EPH')),
 ]
+urlpatterns += [
+    path('', TemplateView.as_view(template_name="index.html"), name="home"),
+]
+urlpatterns += static("/photos/", document_root=os.path.join(settings.BASE_DIR, "photos"))

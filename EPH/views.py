@@ -64,8 +64,9 @@ class CapturePhotoView(APIView):
 
     def post(self, request):
         """ 发送 MQTT 消息触发 ESP32-CAM 拍照 """
-        publish.single("mqtt/control/capture", "capture", hostname=MQTT_BROKER)
+        publish.single("camera/capture", "capture", hostname=MQTT_BROKER)
         return Response({"status": "capture command sent"})
+
 
 PHOTO_DIR = os.path.join(settings.BASE_DIR, "photos")
 
@@ -73,7 +74,18 @@ class PhotoListView(APIView):
     # permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """ 获取 `photos/` 文件夹下的所有照片 """
-        photos = sorted(os.listdir(PHOTO_DIR), reverse=True)[:10]  # 取最新10张照片
-        photo_urls = [request.build_absolute_uri(f"/photos/{p}") for p in photos]
+        """ 直接获取 `photos/` 目录下最新 3 张照片的文件名 """
+        if not os.path.exists(PHOTO_DIR):
+            return Response({"photos": []})  # 确保目录存在
+
+        # 获取 `photos/` 目录下的所有照片，按修改时间排序
+        photos = sorted(
+            [p for p in os.listdir(PHOTO_DIR) if p.endswith((".jpg", ".jpeg", ".png"))],
+            key=lambda x: os.path.getmtime(os.path.join(PHOTO_DIR, x)),
+            reverse=True
+        )[:3]  # 取最新 3 张照片
+
+        # 生成可访问的 URL（前端直接访问）
+        photo_urls = [f"/photos/{p}" for p in photos]
+
         return Response({"photos": photo_urls})
