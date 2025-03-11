@@ -35,7 +35,6 @@
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
         }
 
-        /* 卡片样式 */
         .card {
             background: white;
             border-radius: 15px;
@@ -54,7 +53,6 @@
             padding-bottom: 5px;
         }
 
-        /* 输入和按钮容器 */
         .input-group {
             display: flex;
             flex-wrap: wrap;
@@ -78,7 +76,6 @@
             box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
         }
 
-        /* 按钮样式 */
         button {
             padding: 10px 20px;
             background: #3498db;
@@ -99,14 +96,12 @@
             transform: translateY(0);
         }
 
-        /* 状态提示 */
         p {
             color: #7f8c8d;
             font-size: 14px;
             margin-top: 10px;
         }
 
-        /* 照片展示区 */
         .photo-gallery {
             display: flex;
             flex-wrap: wrap;
@@ -128,15 +123,14 @@
             transform: scale(1.05);
         }
 
-        /* 物体检测列表 */
-        #objectDetectList {
+        #objectDetectList, #doorRecordsList {
             list-style: none;
             text-align: left;
             max-width: 500px;
             margin: 15px auto 0;
         }
 
-        #objectDetectList li {
+        #objectDetectList li, #doorRecordsList li {
             background: #ecf0f1;
             padding: 10px;
             margin: 5px 0;
@@ -144,11 +138,10 @@
             transition: background 0.3s;
         }
 
-        #objectDetectList li:hover {
+        #objectDetectList li:hover, #doorRecordsList li:hover {
             background: #dfe6e9;
         }
 
-        /* 响应式设计 */
         @media (max-width: 600px) {
             .card {
                 padding: 15px;
@@ -182,7 +175,6 @@
     <div class="container">
         <h1>E_PeepHole Control Panel</h1>
 
-        <!-- 用户登录 -->
         <div class="card">
             <h2>User Login</h2>
             <div class="input-group">
@@ -193,25 +185,30 @@
             <p id="loginStatus" style="color: #085702"></p>
         </div>
 
-        <!-- 拍照 -->
         <div class="card">
             <h2>Capture</h2>
             <div class="input-group">
                 <button onclick="capturePhoto()">Capture Now</button>
+                <button onclick="lockDoor()">Lock Door</button>
+                <button onclick="openDoor()">Open Door</button>
             </div>
             <p id="captureStatus" style="color: #085702"></p>
+            <p id="doorStatus" style="color: #085702"></p>
         </div>
 
-        <!-- 最近 3 张照片 -->
         <div class="card">
             <h2>Recent Photos</h2>
             <div id="photoGallery" class="photo-gallery"></div>
         </div>
 
-        <!-- 物体检测记录 -->
         <div class="card">
             <h2>Object Detection Records</h2>
             <ul id="objectDetectList"></ul>
+        </div>
+
+        <div class="card">
+            <h2>Door Operation Records</h2>
+            <ul id="doorRecordsList"></ul>
         </div>
     </div>
 

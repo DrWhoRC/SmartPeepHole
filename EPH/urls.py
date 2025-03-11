@@ -16,6 +16,12 @@ urlpatterns = [
     path('getphotos/', PhotoListView.as_view(), name='getphotos'),
 
     path('objectdetect/', ObjectDetectView.as_view(), name='objectdetect'),
+
+    path('lockdoor/', LockDoorView.as_view(), name='lockdoor'),
+
+    path('opendoor/', OpenDoorView.as_view(), name='opendoor'),
+
+    path('getlockinfo/', GetLockInfoView.as_view(), name='getlockinfo'),
 ]
 urlpatterns += [
     path('', TemplateView.as_view(template_name="index.html"), name="home"),

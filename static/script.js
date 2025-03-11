@@ -16,11 +16,15 @@ function login() {
         if (data.access) {
             accessToken = data.access;
             document.getElementById("loginStatus").innerText = `login success, welcome ${data.user}`;
+            // 登录成功后加载所有信息
+            loadRecentPhotos();
+            loadObjectDetectRecords();
+            loadDoorRecords();
         } else {
             document.getElementById("loginStatus").innerText = "login failed";
         }
     })
-    .catch(err => console.error("login failes:", err));
+    .catch(err => console.error("login failed:", err));
 }
 
 // 发送拍照请求
@@ -40,13 +44,65 @@ function capturePhoto() {
     .then(res => res.json())
     .then(data => {
         document.getElementById("captureStatus").innerText = "capture success";
-        setTimeout(loadRecentPhotos, 5000);  // 5 秒后刷新照片
+        setTimeout(loadRecentPhotos, 5000);
     })
-    .catch(err => console.error("capture failes:", err));
+    .catch(err => console.error("capture failed:", err));
+}
+
+function lockDoor() {
+    if (!accessToken) {
+        document.getElementById("doorStatus").innerText = "please login first";
+        return;
+    }
+
+    fetch(BASE_URL + "/user/lockdoor/", {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + accessToken,
+            "Content-Type": "application/json"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("doorStatus").innerText = `door locked at ${new Date(data.time).toLocaleString()}`;
+        loadDoorRecords();
+    })
+    .catch(err => {
+        document.getElementById("doorStatus").innerText = "lock failed, please try again";
+        console.error("lock door failed:", err);
+    });
+}
+
+function openDoor() {
+    if (!accessToken) {
+        document.getElementById("doorStatus").innerText = "please login first";
+        return;
+    }
+
+    fetch(BASE_URL + "/user/opendoor/", {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + accessToken,
+            "Content-Type": "application/json"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("doorStatus").innerText = `door opened at ${new Date(data.time).toLocaleString()}`;
+        loadDoorRecords();
+    })
+    .catch(err => {
+        document.getElementById("doorStatus").innerText = "open failed, please try again";
+        console.error("open door failed:", err);
+    });
 }
 
 // 加载最近 3 张照片
 function loadRecentPhotos() {
+    if (!accessToken) {
+        return;
+    }
+
     fetch(BASE_URL + "/user/getphotos/")
     .then(res => res.json())
     .then(data => {
@@ -54,9 +110,9 @@ function loadRecentPhotos() {
         gallery.innerHTML = "";  // 清空旧内容
 
         data.photos.forEach(photoPath => {
-            console.log("load pictures:", BASE_URL + photoPath);  // ✅ 调试 URL
+            console.log("load pictures:", BASE_URL + photoPath);
             const img = document.createElement("img");
-            img.src = BASE_URL + photoPath;  // 直接使用 API 返回的路径
+            img.src = BASE_URL + photoPath;
             img.alt = "pictures";
             gallery.appendChild(img);
         });
@@ -66,6 +122,10 @@ function loadRecentPhotos() {
 
 // 加载物体检测记录
 function loadObjectDetectRecords() {
+    if (!accessToken) {
+        return;
+    }
+
     fetch(BASE_URL + "/user/objectdetect/")
     .then(res => res.json())
     .then(data => {
@@ -81,8 +141,21 @@ function loadObjectDetectRecords() {
     .catch(err => console.error("loading detection records failed:", err));
 }
 
-// 页面加载时自动刷新
-window.onload = function() {
-    loadRecentPhotos();
-    loadObjectDetectRecords();
-};
+function loadDoorRecords() {
+    if (!accessToken) {
+        return;
+    }
+
+    fetch(BASE_URL + "/user/getlockinfo/")
+    .then(res => res.json())
+    .then(data => {
+        const list = document.getElementById("doorRecordsList");
+        list.innerHTML = "";
+
+        const li = document.createElement("li");
+        li.innerText = `${new Date(data.time).toLocaleString()} - Door ${data.msg ? 'locked' : 'opened'}`;
+        list.appendChild(li);
+    })
+    .catch(err => console.error("loading door records failed:", err));
+}
+

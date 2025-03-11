@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from E_PeepHole import settings
-from .models import UserBasicModel, ObjectDetectModel
+from .models import UserBasicModel, ObjectDetectModel, LockDoorModel
 from rest_framework.permissions import IsAuthenticated
 import paho.mqtt.publish as publish
 # Create your views here.
@@ -32,10 +32,9 @@ class LoginView(APIView):
         password = request.data.get('password')
 
         user = UserBasicModel.objects.filter(name=name).first()
-        if not user or not user.check_password(password):  # 使用 Django 的 check_password()
+        if not user or not user.check_password(password):
             return Response({"error": "name or pwd wrong"}, status=400)
 
-        # 生成 JWT Token
         refresh = RefreshToken.for_user(user)
         return Response({
             "refresh": str(refresh),
@@ -63,7 +62,6 @@ class CapturePhotoView(APIView):
     # permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        """ 发送 MQTT 消息触发 ESP32-CAM 拍照 """
         publish.single("camera/capture", "capture", hostname=MQTT_BROKER)
         return Response({"status": "capture command sent"})
 
@@ -74,18 +72,46 @@ class PhotoListView(APIView):
     # permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """ 直接获取 `photos/` 目录下最新 3 张照片的文件名 """
         if not os.path.exists(PHOTO_DIR):
-            return Response({"photos": []})  # 确保目录存在
+            return Response({"photos": []})
 
-        # 获取 `photos/` 目录下的所有照片，按修改时间排序
         photos = sorted(
             [p for p in os.listdir(PHOTO_DIR) if p.endswith((".jpg", ".jpeg", ".png"))],
             key=lambda x: os.path.getmtime(os.path.join(PHOTO_DIR, x)),
             reverse=True
-        )[:3]  # 取最新 3 张照片
-
-        # 生成可访问的 URL（前端直接访问）
+        )[:3]
         photo_urls = [f"/photos/{p}" for p in photos]
 
         return Response({"photos": photo_urls})
+
+class LockDoorView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        publish.single("servo/control", "lock", hostname=MQTT_BROKER)
+        lockRecord = LockDoorModel.objects.create(status=True)  # 记录门锁操作
+        return Response({
+            "msg": lockRecord.status,
+            "time": lockRecord.created_at
+        })
+
+class OpenDoorView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        publish.single("servo/control", "open", hostname=MQTT_BROKER)
+        lockRecord = LockDoorModel.objects.create(status=False)  # 记录门锁操作
+        return Response({
+            "msg": lockRecord.status,
+            "time": lockRecord.created_at
+        })
+
+class GetLockInfoView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        lockRecord = LockDoorModel.objects.order_by('-created_at').first()
+        return Response({
+            "msg": lockRecord.status,
+            "time": lockRecord.created_at
+        })

@@ -32,3 +32,4 @@ urlpatterns += [
     path('', TemplateView.as_view(template_name="index.html"), name="home"),
 ]
 urlpatterns += static("/photos/", document_root=os.path.join(settings.BASE_DIR, "photos"))
+urlpatterns += static("/static/", document_root=os.path.join(settings.BASE_DIR, "static"))

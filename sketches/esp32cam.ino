@@ -2,20 +2,16 @@
 #include <PubSubClient.h>
 #include "esp_camera.h"
 
-// Wi-Fi 连接信息
 const char* ssid = "Veronica";
 const char* password = "12345678";
 
-// MQTT 服务器
 const char* mqtt_server = "172.20.10.2";
 const char* topic_capture = "camera/capture";
 const char* topic_image = "camera/image";
 
-// MQTT 客户端
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-// 摄像头引脚配置
 #define PWDN_GPIO_NUM    32
 #define RESET_GPIO_NUM   -1
 #define XCLK_GPIO_NUM     0
@@ -33,7 +29,6 @@ PubSubClient client(espClient);
 #define HREF_GPIO_NUM    23
 #define PCLK_GPIO_NUM    22
 
-// 连接 Wi-Fi
 void setup_wifi() {
   Serial.print("connecting Wi-Fi ...");
   WiFi.begin(ssid, password);
@@ -42,7 +37,7 @@ void setup_wifi() {
     delay(500);
     Serial.print(".");
     retries++;
-    if (retries > 30) { // 15秒超时
+    if (retries > 30) {
       Serial.println("\nWi-Fi connection failed，reboot...");
       ESP.restart();
     }
@@ -50,7 +45,6 @@ void setup_wifi() {
   Serial.println("\nWi-Fi connected！");
 }
 
-// 连接 MQTT 服务器
 void reconnect_mqtt() {
   int retries = 0;
   while (!client.connected()) {
@@ -72,7 +66,6 @@ void reconnect_mqtt() {
   }
 }
 
-// 摄像头初始化
 void setup_camera() {
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
@@ -99,7 +92,7 @@ void setup_camera() {
   config.fb_location = CAMERA_FB_IN_PSRAM;
   config.jpeg_quality = 8;
   config.fb_count = 1;
-  config.frame_size = FRAMESIZE_UXGA; // 1280x1024 (更清晰)
+  config.frame_size = FRAMESIZE_UXGA;
 
   if (esp_camera_init(&config) != ESP_OK) {
     Serial.println("camera initialization failed！");
@@ -107,7 +100,6 @@ void setup_camera() {
   }
 }
 
-// 发送图片数据到 MQTT
 void sendImageToMQTT(camera_fb_t *fb) {
     if (!client.connected()) {
         reconnect_mqtt();
@@ -116,21 +108,20 @@ void sendImageToMQTT(camera_fb_t *fb) {
     Serial.println("sending starting mark of the pic...");
     client.publish(topic_image, "START", false);
 
-    const size_t CHUNK_SIZE = 1000;  // 每次最多发送 1000 字节
+    const size_t CHUNK_SIZE = 1000;
     size_t bytes_sent = 0;
 
     while (bytes_sent < fb->len) {
         size_t chunk_size = min(CHUNK_SIZE, fb->len - bytes_sent);
         client.publish(topic_image, fb->buf + bytes_sent, chunk_size, false);
         bytes_sent += chunk_size;
-        delay(10);  // 确保 MQTT 服务器有时间处理
+        delay(10);
     }
 
     Serial.println("sending ending mark of  the pic ...");
     client.publish(topic_image, "END", false);
 }
 
-// 处理 MQTT 消息
 void callback(char* topic, byte* payload, unsigned int length) {
   String message = String((char*)payload).substring(0, length);
   if (message == "capture") {
